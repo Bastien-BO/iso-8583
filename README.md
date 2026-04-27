@@ -1,2 +1,2 @@
 # iso-8583
-Toolbof used to pack and unpack
+Toolbox used to pack and unpack iso-8583 objects
