@@ -1,6 +1,6 @@
 [project]
 name = "iso-8583"
-version = "0.0.1"
+version = "1.0.0"
 description = "Iso-8583 toolbox"
 readme = "README.md"
 authors = [
