@@ -10,25 +10,15 @@ from iso_8583.extendable_formats import LengthType
 from iso_8583.iso_8583 import FieldSpec, Message, encode_bcd, decode_bcd
 
 from tests.conftest import (
-    full_coverage_spec,
-    SampleMTI,
-    make_msg,
-    valid_value,
-    invalid_value,
-    ALL_BITS,
-    FIXED_BITS,
-    FIXED_NO_PAD_BITS,
-    VAR_BITS,
-    CHARSET_BITS,
-    ODD_BCD_BITS,
-    MIN_LENGTH_BITS,
+    full_coverage_spec, SampleMTI, make_msg,
+    valid_value, invalid_value,
+    ALL_BITS, FIXED_BITS, FIXED_NO_PAD_BITS, VAR_BITS,
+    CHARSET_BITS, ODD_BCD_BITS, MIN_LENGTH_BITS,
 )
 
 
-# BCD helpers
-
-
 class TestEncodeBcd:
+
     def test_even_length(self):
         assert encode_bcd("1234") == b"\x12\x34"
 
@@ -40,6 +30,7 @@ class TestEncodeBcd:
 
 
 class TestDecodeBcd:
+
     def test_normal(self):
         assert decode_bcd(b"\x01\x23", 3) == "123"
 
@@ -47,13 +38,11 @@ class TestDecodeBcd:
         assert decode_bcd(b"\x12\x34", 4) == "1234"
 
     def test_uppercase(self):
-        assert decode_bcd(b"\xab\xcd", 4) == "ABCD"
-
-
-# Normalize
+        assert decode_bcd(b"\xAB\xCD", 4) == "ABCD"
 
 
 class TestNormalize:
+
     def test_fixed_n_is_padded(self):
         spec = FieldSpec(LengthType.FIXED, FieldFormat.N, 6)
         assert spec.validate("42") == "000042"
@@ -68,10 +57,8 @@ class TestNormalize:
             spec.validate("AB")  # too short, not padded
 
 
-# Charset
-
-
 class TestCharset:
+
     @pytest.mark.parametrize("bit", CHARSET_BITS)
     def test_invalid_chars_rejected(self, bit):
         spec = full_coverage_spec[bit]
@@ -93,10 +80,8 @@ class TestCharset:
             invalid_value(FieldFormat.B, 4)
 
 
-# Length
-
-
 class TestFixedLength:
+
     @pytest.mark.parametrize("bit", FIXED_NO_PAD_BITS)
     def test_too_short(self, bit):
         spec = full_coverage_spec[bit]
@@ -111,6 +96,7 @@ class TestFixedLength:
 
 
 class TestVarLength:
+
     @pytest.mark.parametrize("bit", VAR_BITS)
     def test_too_long(self, bit):
         spec = full_coverage_spec[bit]
@@ -119,6 +105,7 @@ class TestVarLength:
 
 
 class TestMinLength:
+
     @pytest.mark.parametrize("bit", MIN_LENGTH_BITS)
     def test_below_min(self, bit):
         spec = full_coverage_spec[bit]
@@ -132,10 +119,9 @@ class TestMinLength:
         msg[bit] = valid_value(spec.format, spec.min_length)
 
 
-# Init
-
 
 class TestFieldSpecInit:
+
     def test_fixed_n_min_length_relaxed(self):
         spec = FieldSpec(LengthType.FIXED, FieldFormat.N, 6)
         assert spec.min_length == 1
@@ -157,10 +143,8 @@ class TestFieldSpecInit:
             FieldSpec(LengthType.LLVAR, FieldFormat.A, 100)  # max 99
 
 
-# Value encoding
-
-
 class TestValueEncode:
+
     def test_bcd(self):
         spec = FieldSpec(LengthType.FIXED, FieldFormat.N, 4)
         assert spec.value_encode("1234") == b"\x12\x34"
@@ -175,10 +159,8 @@ class TestValueEncode:
         assert spec.value_encode(data) == data
 
 
-# Valid values
-
-
 class TestValidValues:
+
     @pytest.mark.parametrize("bit", ALL_BITS)
     def test_accepted(self, bit):
         spec = full_coverage_spec[bit]
@@ -188,31 +170,51 @@ class TestValidValues:
         assert msg[bit] == value
 
 
-# Round-trip
-
-
 class TestRoundTrip:
+
     @pytest.mark.parametrize("bit", ALL_BITS)
     def test_pack_unpack(self, bit):
         spec = full_coverage_spec[bit]
         msg = make_msg()
         msg[bit] = valid_value(spec.format, spec.max_length)
         msg2 = Message.unpack(
-            full_coverage_spec,
-            msg.pack(),
-            mti_class=SampleMTI,
+            full_coverage_spec, msg.pack(), mti_class=SampleMTI,
         )
         assert msg2[bit] == msg[bit]
 
 
 class TestOddBcd:
+
     @pytest.mark.parametrize("bit", ODD_BCD_BITS)
     def test_roundtrip(self, bit):
         msg = make_msg()
         msg[bit] = "12345"
         msg2 = Message.unpack(
-            full_coverage_spec,
-            msg.pack(),
-            mti_class=SampleMTI,
+            full_coverage_spec, msg.pack(), mti_class=SampleMTI,
         )
         assert msg2[bit] == "12345"
+
+
+class TestFormatBoundaries:
+
+    def test_ans_excludes_space(self):
+        assert " " not in FieldFormat.ANS.allowed_chars
+
+    def test_anp_excludes_punct(self):
+        assert "!" not in FieldFormat.ANP.allowed_chars
+
+    def test_ansp_includes_space_and_punct(self):
+        chars = FieldFormat.ANSP.allowed_chars
+        assert " " in chars
+        assert "!" in chars
+        assert "A" in chars
+        assert "1" in chars
+
+
+class TestFieldValidationErrorPartial:
+
+    def test_with_partial(self):
+        partial = {"0001": "123"}
+        err = FieldValidationError("broken", partial=partial)
+        assert err.partial == {"0001": "123"}
+        assert str(err) == "broken"
