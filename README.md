@@ -11,7 +11,7 @@ from iso_8583 import FieldSpec, SubFieldSpec, TlvFieldSpec, Message
 
 spec = {
     # Regular field
-    2: FieldSpec(LengthType.LLVAR, FieldFormat.N, 19),
+    2: FieldSpec(LengthType.LLVAR, FieldFormat.N, 19, min_length=8),
     # ASCII TLV subfields
     47: TlvFieldSpec(
         LengthType.LLVAR, FieldFormat.ANSP, 99,
@@ -25,7 +25,7 @@ spec = {
         LengthType.LLLVAR, FieldFormat.B, 255,
         subfields={
             "0001": SubFieldSpec(LengthType.FIXED, FieldFormat.AN, 1),
-            "0009": SubFieldSpec(LengthType.LLVAR, FieldFormat.ANSP, 8),
+            "0009": SubFieldSpec(LengthType.LLVAR, FieldFormat.ANSP, 8, min_length=1),
             "0010": SubFieldSpec(LengthType.FIXED, FieldFormat.B, 4),
             "0023": SubFieldSpec(
                 LengthType.FIXED, FieldFormat.ANSP, 8,
