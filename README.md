@@ -1,6 +1,39 @@
-# iso-8583
+<div align="center">
 
-Pure-Python ISO-8583 message packing and unpacking. No dependencies.
+# ISO-8583
+ 
+**Pure Python ISO-8583 message packing and unpacking. No dependencies.**
+
+![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
+![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https://raw.githubusercontent.com/Bastien-BO/iso-8583/main/pyproject.toml)
+[![Lint](https://github.com/Bastien-BO/iso-8583/actions/workflows/lint.yml/badge.svg)](https://github.com/Bastien-BO/iso-8583/actions/workflows/lint.yml)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Tests](https://github.com/Bastien-BO/iso-8583/actions/workflows/tests.yml/badge.svg)](https://github.com/Bastien-BO/iso-8583/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/Bastien-BO/iso-8583/branch/main/graph/badge.svg)](https://codecov.io/gh/Bastien-BO/iso-8583)
+![License](https://img.shields.io/pypi/l/iso-8583)
+</div>
+
+## Features
+ 
+- Pure Python, zero runtime dependencies
+- Pack and unpack ISO-8583 messages
+- Fixed and variable-length fields (`LLVAR`, `LLLVAR`)
+- Many field formats: ASCII, BCD, and raw binary
+- Nested subfields, including ASCII TLV and repeatable subfields
+- Partial unpacking that stops at the first error
+- Bring-your-own `MTI` and `LengthType` enums for `CB2A` or other specific implementations
+
+
+## Table of contents
+- [Quick start](#quick-start)
+- [Field formats](#field-formats)
+- [Length types](#length-types)
+- [Subfields](#subfields)
+- [Partial unpack](#partial-unpack)
+- [Custom MTI](#custom-mti)
+- [Custom LengthType](#custom-lengthtype)
+- [License](#license)
+
 
 ## Quick start
 
@@ -139,3 +172,7 @@ msg2 = Message.unpack(spec, raw, mti_class=MTI)
 print(msg2[2])   # 4242424242424242
 print(msg2[60])  # HELLO WORLD
 ```
+
+## License
+ 
+See [LICENSE](LICENSE).
