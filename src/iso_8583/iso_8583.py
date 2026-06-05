@@ -493,7 +493,9 @@ class Message:
 
         # Read the bitmap (8 or 16 bytes depending on bit 1).
         primary = int.from_bytes(raw[2:10], "big")
-        if primary & (1 << 63):  # Logical AND, first bit set length of first field (bitmap)
+        if primary & (
+            1 << 63
+        ):  # Logical AND, first bit set length of first field (bitmap)
             bitmap = int.from_bytes(raw[2:18], "big")
             offset = 18
         else:
