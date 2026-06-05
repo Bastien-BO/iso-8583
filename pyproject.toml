@@ -1,0 +1,43 @@
+[project]
+name = "iso-8583"
+version = "1.0.0"
+description = "Iso-8583 toolbox"
+readme = "README.md"
+authors = [
+    { name = "Bastien BO", email = "bastien.bo@free.fr" }
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "black",
+    "isort",
+    "pylint",
+    "pytest-random-order",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "pytest_httpx",
+    "ruff",
+]
+
+[tool.hatch.build]
+exclude = [".git", ]
+
+[project.scripts]
+iso-8583 = "iso_8583:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-branch --random-order --strict-markers"
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
+
+[tool.bandit]
+exclude_dirs = [".cache", ".venv", "tests"]
