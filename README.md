@@ -7,26 +7,58 @@ Pure-Python ISO-8583 message packing and unpacking. No dependencies.
 ```python
 from iso_8583.fixed_formats import FieldFormat
 from iso_8583.extendable_formats import MTI, LengthType
-from iso_8583 import FieldSpec, Message
+from iso_8583 import FieldSpec, SubFieldSpec, TlvFieldSpec, Message
 
 spec = {
-    2: FieldSpec(LengthType.LLVAR, FieldFormat.N, 19),
-    3: FieldSpec(LengthType.FIXED, FieldFormat.N, 6),
-    4: FieldSpec(LengthType.FIXED, FieldFormat.N, 12),
-    41: FieldSpec(LengthType.FIXED, FieldFormat.ANSP, 8),
+    # Regular field
+    2: FieldSpec(LengthType.LLVAR, FieldFormat.N, 19, min_length=8),
+    # ASCII TLV subfields
+    47: TlvFieldSpec(
+        LengthType.LLVAR, FieldFormat.ANSP, 99,
+        subfields={
+            "T1": SubFieldSpec(LengthType.LLVAR, FieldFormat.ANSP, 10),
+            "T2": SubFieldSpec(LengthType.LLVAR, FieldFormat.N, 8),
+        },
+    ),
+    # Binary subfields (with a repeatable one)
+    59: FieldSpec(
+        LengthType.LLLVAR, FieldFormat.B, 255,
+        subfields={
+            "0001": SubFieldSpec(LengthType.FIXED, FieldFormat.AN, 1),
+            "0009": SubFieldSpec(LengthType.LLVAR, FieldFormat.ANSP, 8, min_length=1),
+            "0010": SubFieldSpec(LengthType.FIXED, FieldFormat.B, 4),
+            "0023": SubFieldSpec(
+                LengthType.FIXED, FieldFormat.ANSP, 8,
+                repeatable=True,
+            ),
+        },
+    ),
 }
 
 msg = Message(spec, MTI.AUTHORISATION_REQUEST)
 msg[2] = "4242424242424242"
-msg[3] = "000000"
-msg[4] = "000000001000"
-msg[41] = "TERM0001"
+msg[47] = {"T1": "HELLO", "T2": "12345678"}
+msg[59] = {
+    "0001": "A",
+    "0009": "HELLO",
+    "0010": b"\xAB\xCD\xEF\x12",
+    "0023": ["ENTRY-01", "ENTRY-02"],
+}
 
 raw = msg.pack()
 msg2 = Message.unpack(spec, raw, mti_class=MTI)
 
-print(msg2[2])   # 4242424242424242
-print(msg2[41])  # TERM0001
+print(msg2[2])            # 4242424242424242
+print(msg2[47]["T1"])     # HELLO
+print(msg2[59]["0001"])   # A
+print(msg2[59]["0010"])   # b'\xab\xcd\xef\x12'
+print(msg2[59]["0023"])   # ['ENTRY-01', 'ENTRY-02']
+
+# Partial unpack stops at the first error and returns what was read
+partial_spec = {2: FieldSpec(LengthType.LLVAR, FieldFormat.N, 19)}
+msg3, error = Message.unpack_partial(partial_spec, raw, mti_class=MTI)
+print(msg3[2])  # 4242424242424242
+print(error)    # bit 47: present in bitmap but not in spec
 ```
 
 ## Field formats
@@ -51,115 +83,6 @@ print(msg2[41])  # TERM0001
 | `FIXED` | 0 bytes | — |
 | `LLVAR` | 1 byte | 99 |
 | `LLLVAR` | 2 bytes | 1000 |
-
-## Subfields
-
-```python
-from iso_8583.fixed_formats import FieldFormat
-from iso_8583.extendable_formats import MTI, LengthType
-from iso_8583 import FieldSpec, SubFieldSpec, Message
-
-spec = {
-    119: FieldSpec(
-        LengthType.LLLVAR, FieldFormat.B, 255,
-        subfields={
-            "0001": SubFieldSpec(LengthType.FIXED, FieldFormat.AN, 1),
-            "0009": SubFieldSpec(LengthType.LLVAR, FieldFormat.ANSP, 8),
-            "0011": SubFieldSpec(LengthType.LLVAR, FieldFormat.N, 19),
-        },
-    ),
-}
-
-msg = Message(spec, MTI.AUTHORISATION_REQUEST)
-msg[119] = {"0001": "A", "0009": "HELLO", "0011": "1234567890"}
-
-raw = msg.pack()
-msg2 = Message.unpack(spec, raw, mti_class=MTI)
-print(msg2[119])
-# {'0001': 'A', '0009': 'HELLO', '0011': '1234567890'}
-```
-
-For ASCII TLV subfields (tag 2 chars + length 2 chars + value), use `TlvFieldSpec`:
-
-```python
-from iso_8583.fixed_formats import FieldFormat
-from iso_8583.extendable_formats import MTI, LengthType
-from iso_8583 import TlvFieldSpec, SubFieldSpec, Message
-
-spec = {
-    47: TlvFieldSpec(
-        LengthType.LLVAR, FieldFormat.ANSP, 99,
-        subfields={
-            "T1": SubFieldSpec(LengthType.LLVAR, FieldFormat.ANSP, 10),
-            "T2": SubFieldSpec(LengthType.LLVAR, FieldFormat.N, 8),
-        },
-    ),
-}
-
-msg = Message(spec, MTI.AUTHORISATION_REQUEST)
-msg[47] = {"T1": "HELLO", "T2": "12345678"}
-
-raw = msg.pack()
-msg2 = Message.unpack(spec, raw, mti_class=MTI)
-print(msg2[47])
-# {'T1': 'HELLO', 'T2': '12345678'}
-```
-
-Repeatable subfields accept a list:
-
-```python
-from iso_8583.fixed_formats import FieldFormat
-from iso_8583.extendable_formats import MTI, LengthType
-from iso_8583 import FieldSpec, SubFieldSpec, Message
-
-spec = {
-    56: FieldSpec(
-        LengthType.LLVAR, FieldFormat.B, 99,
-        subfields={
-            "0001": SubFieldSpec(LengthType.FIXED, FieldFormat.N, 4),
-            "0023": SubFieldSpec(
-                LengthType.FIXED, FieldFormat.ANSP, 8,
-                repeatable=True,
-            ),
-        },
-    ),
-}
-
-msg = Message(spec, MTI.AUTHORISATION_REQUEST)
-msg[56] = {"0001": "1234", "0023": ["ENTRY-01", "ENTRY-02"]}
-
-raw = msg.pack()
-msg2 = Message.unpack(spec, raw, mti_class=MTI)
-print(msg2[56]["0023"])
-# ['ENTRY-01', 'ENTRY-02']
-```
-
-## Partial unpack
-
-Stops at the first error and returns what was read:
-
-```python
-from iso_8583.fixed_formats import FieldFormat
-from iso_8583.extendable_formats import MTI, LengthType
-from iso_8583 import FieldSpec, Message
-
-full_spec = {
-    2: FieldSpec(LengthType.LLVAR, FieldFormat.N, 19),
-    3: FieldSpec(LengthType.FIXED, FieldFormat.N, 6),
-}
-partial_spec = {
-    2: FieldSpec(LengthType.LLVAR, FieldFormat.N, 19),
-}
-
-msg = Message(full_spec, MTI.AUTHORISATION_REQUEST)
-msg[2] = "4242424242424242"
-msg[3] = "000000"
-raw = msg.pack()
-
-result, error = Message.unpack_partial(partial_spec, raw, mti_class=MTI)
-print(result[2])  # 4242424242424242
-print(error)      # bit 3: present in bitmap but not in spec
-```
 
 ## Custom MTI
 
@@ -189,6 +112,7 @@ print(msg2._mti)  # MyMTI.SALE
 ```python
 from enum import Enum
 from iso_8583.fixed_formats import FieldFormat
+from iso_8583.extendable_formats import MTI
 from iso_8583 import FieldSpec, Message
 
 class MyLengthType(Enum):
@@ -201,20 +125,17 @@ class MyLengthType(Enum):
         self.prefix_bytes = prefix_bytes
         self.max_field_length = max_field_length
 
-class MyMTI(int, Enum):
-    AUTH = 0x0100
-
 spec = {
     2: FieldSpec(MyLengthType.LLVAR, FieldFormat.N, 19),
     60: FieldSpec(MyLengthType.LL2VAR, FieldFormat.ANSP, 999),
 }
 
-msg = Message(spec, MyMTI.AUTH)
+msg = Message(spec, MTI.AUTHORISATION_REQUEST)
 msg[2] = "4242424242424242"
 msg[60] = "HELLO WORLD"
 
 raw = msg.pack()
-msg2 = Message.unpack(spec, raw, mti_class=MyMTI)
+msg2 = Message.unpack(spec, raw, mti_class=MTI)
 print(msg2[2])   # 4242424242424242
 print(msg2[60])  # HELLO WORLD
 ```

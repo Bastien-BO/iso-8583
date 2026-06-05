@@ -53,9 +53,8 @@ class FieldSpec:
 
         self.tag_size = 0
         if subfields:
-            # Subfield tags are hex strings, on the wire they are
-            # binary bytes — half as many as hex characters.
-            self.tag_size = len(next(iter(subfields))) // 2
+            first_tag = next(iter(subfields))
+            self.tag_size = len(first_tag) // 2
 
         if length_type.prefix_bytes == 0 and min_length == 0:
             # FIXED N values are right-justified and left-filled
@@ -494,7 +493,7 @@ class Message:
 
         # Read the bitmap (8 or 16 bytes depending on bit 1).
         primary = int.from_bytes(raw[2:10], "big")
-        if primary & (1 << 63):
+        if primary & (1 << 63):  # Logical AND, first bit set length of first field (bitmap)
             bitmap = int.from_bytes(raw[2:18], "big")
             offset = 18
         else:
