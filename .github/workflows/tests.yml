@@ -1,0 +1,34 @@
+name: Run tests and upload coverage
+
+on:
+  push
+
+jobs:
+  pytest:
+    name: Run tests and collect coverage
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v6
+
+      - name: Install uv and set the matrix Python version
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the project and dependencies
+        run: uv sync --locked
+
+      - name: Run tests in the uv-managed environment
+        run: uv run pytest --cov --cov-branch --cov-report=xml
+
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
