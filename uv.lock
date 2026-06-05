@@ -311,8 +311,8 @@ wheels = [
 ]
 
 [[package]]
-name = "iso-8583"
-version = "1.0.0"
+name = "iso-8583-toolbox"
+version = "0.1.0"
 source = { editable = "." }
 
 [package.dev-dependencies]
