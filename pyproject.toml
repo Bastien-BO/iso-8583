@@ -1,7 +1,7 @@
 [project]
-name = "iso-8583"
-version = "1.0.0"
-description = "Iso-8583 toolbox"
+name = "iso-8583-toolbox"
+version = "0.1.0"
+description = "ISO-8583 toolbox"
 readme = "README.md"
 authors = [
     { name = "Bastien BO", email = "bastien.bo@free.fr" }
@@ -24,6 +24,9 @@ dev = [
 
 [tool.hatch.build]
 exclude = [".git", ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/iso_8583"]
 
 [project.scripts]
 iso-8583 = "iso_8583:main"
