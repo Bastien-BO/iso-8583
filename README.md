@@ -4,13 +4,14 @@
  
 **Pure Python ISO-8583 message packing and unpacking. No dependencies.**
 
-![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
-![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https://raw.githubusercontent.com/Bastien-BO/iso-8583/main/pyproject.toml)
+[![codecov](https://codecov.io/gh/Bastien-BO/iso-8583/branch/main/graph/badge.svg)](https://codecov.io/gh/Bastien-BO/iso-8583)
 [![Lint](https://github.com/Bastien-BO/iso-8583/actions/workflows/lint.yml/badge.svg)](https://github.com/Bastien-BO/iso-8583/actions/workflows/lint.yml)
+![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
+![PyPI](https://img.shields.io/pypi/v/iso-8583-toolbox)
+![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https://raw.githubusercontent.com/Bastien-BO/iso-8583/main/pyproject.toml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Tests](https://github.com/Bastien-BO/iso-8583/actions/workflows/tests.yml/badge.svg)](https://github.com/Bastien-BO/iso-8583/actions/workflows/tests.yml)
-[![codecov](https://codecov.io/gh/Bastien-BO/iso-8583/branch/main/graph/badge.svg)](https://codecov.io/gh/Bastien-BO/iso-8583)
-![License](https://img.shields.io/pypi/l/iso-8583)
+
 </div>
 
 
@@ -26,6 +27,7 @@
 
 ## Table of contents
  
+- [Installation](#installation)
 - [Quick start](#quick-start)
 - [Field formats](#field-formats)
 - [Length types](#length-types)
@@ -34,8 +36,27 @@
 - [Custom MTI](#custom-mti)
 - [Custom LengthType](#custom-lengthtype)
 - [License](#license)
+
+## Installation
+ 
+```bash
+uv add iso-8583-toolbox
+```
+ 
+Or with pip:
+ 
+```bash
+pip install iso-8583-toolbox
+```
+ 
+The package installs as `iso-8583-toolbox` but is imported as `iso_8583`:
+ 
+```python
+from iso_8583 import Message
+```
  
 ## Quick start
+
  
 ```python
 from iso_8583.fixed_formats import FieldFormat
